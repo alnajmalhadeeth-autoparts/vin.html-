@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>البحث برقم VIN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #333;
+      color: #fff;
+      padding: 15px 0;
+      text-align: center;
+    }
+    main {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin: 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      direction: ltr;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    #result {
+      margin-top: 20px;
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 5px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>النجم الحديث لقطع غيار السيارات</h1>
+  </header>
+
+  <main>
+    <h2>البحث باستخدام رقم VIN</h2>
+    <input id="vinInput" type="text" placeholder="أدخل رقم VIN هنا" maxlength="17">
+    <button onclick="searchVIN()">بحث</button>
+    <div id="result"></div>
+  </main>
+
+  <script>
+    function searchVIN() {
+      const vin = document.getElementById('vinInput').value.trim();
+      const resultDiv = document.getElementById('result');
+      if (vin.length !== 17) {
+        resultDiv.innerHTML = '<span style="color:red;">رقم VIN يجب أن يكون 17 خانة.</span>';
+        return;
+      }
+
+      resultDiv.innerHTML = 'جاري التحميل...';
+
+      fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`)
+        .then(response => response.json())
+        .then(data => {
+          if (!data.Results || data.Results.length === 0) {
+            resultDiv.innerHTML = 'لم يتم العثور على بيانات.';
+            return;
+          }
+
+          const filtered = data.Results.filter(item => item.Value && item.Value !== "Not Applicable");
+          if (filtered.length === 0) {
+            resultDiv.innerHTML = 'لم يتم العثور على بيانات مفيدة لهذا الرقم.';
+            return;
+          }
+
+          let html = '<h3>تفاصيل السيارة:</h3><ul>';
+          filtered.forEach(item => {
+            html += `<li><strong>${item.Variable}:</strong> ${item.Value}</li>`;
+          });
+          html += '</ul>';
+          resultDiv.innerHTML = html;
+        })
+        .catch(err => {
+          resultDiv.innerHTML = '<span style="color:red;">حدث خطأ في جلب البيانات.</span>';
+          console.error(err);
+        });
+    }
+  </script>
+
+</body>
+</html>
